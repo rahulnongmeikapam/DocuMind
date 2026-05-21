@@ -1,10 +1,8 @@
-langchain
-langchain-community
-langchain-openai
-faiss-cpu
-sentence-transformers
-huggingface-hub
-torch
 streamlit
 PyPDF2
 python-dotenv
+langchain
+langchain-community
+langchain-groq
+faiss-cpu
+sentence-transformers
