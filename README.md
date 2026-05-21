@@ -35,7 +35,7 @@ https://docu-mind-pdf.streamlit.app
 Clone the repository:
 
 ```bash
-git clone YOUR_GITHUB_LINK
+git clone https://github.com/rahulnongmeikapam/DocuMind
 ```
 
 Install dependencies:
