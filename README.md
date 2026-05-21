@@ -18,7 +18,17 @@ https://docu-mind-pdf.streamlit.app
 - Clean and interactive Streamlit interface
 
 ---
+## Screenshots
 
+### Home Page
+![Home](screenshots/homepage.png)
+
+### PDF Upload
+![Upload](screenshots/upload.png)
+
+### AI Chatbot Response
+![Chatbot](screenshots/chatbot.png)
+---
 ## Tech Stack
 
 - Python
