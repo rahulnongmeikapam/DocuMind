@@ -25,7 +25,7 @@ https://docu-mind-pdf.streamlit.app
 - Streamlit
 - LangChain
 - FAISS
-- Google Gemini API
+- Groq API
 - PyPDF2
 
 ---
