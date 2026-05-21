@@ -1,54 +1,78 @@
-# AI PDF Chatbot
+# DocuMind – AI PDF Chatbot
 
-A simple Streamlit app that lets you upload PDF files, create embeddings, and chat with your documents.
+DocuMind is an AI-powered PDF chatbot that allows users to upload PDF documents and interact with them using natural language questions.
 
+The application uses Retrieval-Augmented Generation (RAG) to provide context-aware answers from uploaded documents.
+
+---
 ## Live Demo
-https://docu-mind-pdf.streamlit.app/
 
-##  Features
-📄 Upload multiple PDF documents
+https://docu-mind-pdf.streamlit.app
 
-🧠 AI-powered document understanding using Groq LLM
+## Features
 
-🔍 Semantic search using FAISS vector database
+- Upload and analyze PDF files
+- Ask questions from uploaded documents
+- Context-aware AI responses
+- Fast semantic search using vector embeddings
+- Clean and interactive Streamlit interface
 
-📚 Chunk-based document indexing for better accuracy
+---
 
-💬 Interactive chat interface for Q&A over PDFs
+## Tech Stack
 
-⚡ Suggested prompts for quick interaction
+- Python
+- Streamlit
+- LangChain
+- FAISS
+- Google Gemini API
+- PyPDF2
 
-🎨 Clean modern UI built with Streamlit
+---
 
+## Installation
 
-## How It Works
-Upload one or more PDF files
+Clone the repository:
 
-Documents are split into chunks and embedded using HuggingFace embeddings
+```bash
+git clone YOUR_GITHUB_LINK
+```
 
-FAISS vector database stores document embeddings
+Install dependencies:
 
-User queries are matched against relevant chunks
+```bash
+pip install -r requirements.txt
+```
 
-Groq LLM generates responses using only retrieved context
+Run the application:
 
+```bash
+streamlit run app.py
+```
+
+---
 
 ## Usage
 
-Upload PDF files
+1. Upload a PDF document
+2. Ask questions related to the document
+3. Receive AI-generated answers instantly
 
-Click Process Documents
+---
 
-Ask any question about your document
 
-Get AI-generated answers based only on PDF content
-🔐 Supported Backend
+---
 
-🟢 Groq API (llama-3.1-8b-instant)
+## Future Improvements
 
-## Notes
-No API key is required in the UI anymore
+- Multi-document support
+- Chat history
+- Authentication system
+- Better UI/UX
+- Export conversations
 
-API key is securely stored using environment variables or Streamlit Secrets
+---
 
-Works locally and on Streamlit Cloud
+## Author
+
+Rahul Nongmeikapam
