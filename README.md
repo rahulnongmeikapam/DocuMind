@@ -2,6 +2,9 @@
 
 A simple Streamlit app that lets you upload PDF files, create embeddings, and chat with your documents.
 
+## Live Demo
+https://docu-mind-pdf.streamlit.app/
+
 ## Quick start
 
 1. Create and activate a Python virtual environment:
