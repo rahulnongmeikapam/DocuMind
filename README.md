@@ -7,7 +7,7 @@ The application uses Retrieval-Augmented Generation (RAG) to provide context-awa
 ---
 ## Live Demo
 
-https://docu-mind-pdf.streamlit.app
+[Launch DocuMind](https://docu-mind-pdf.streamlit.app/)
 
 ## Features
 
