@@ -6,6 +6,13 @@ __pycache__/
 # C extensions
 *.so
 
+# ignore this file
+api.env 
+.streamlit/secrets.toml
+.env
+__pycache__/
+*.pyc
+
 # Distribution / packaging
 .Python
 build/
