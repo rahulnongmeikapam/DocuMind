@@ -2,6 +2,9 @@ import streamlit as st
 from PyPDF2 import PdfReader
 import os
 import datetime
+from dotenv import load_dotenv
+
+load_dotenv("api.env", override=True)
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
@@ -16,21 +19,25 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ---------------------------
-# API KEY HANDLER (IMPORTANT FIX)
-# ---------------------------
-def get_api_key():
-    # 1. Streamlit Cloud (BEST)
-    if "GROQ_API_KEY" in st.secrets:
-        return st.secrets["GROQ_API_KEY"]
 
-    # 2. Local .env fallback
+def get_api_key():
     return os.getenv("GROQ_API_KEY")
 
 
-# ---------------------------
-# SESSION STATE
-# ---------------------------
+def get_llm():
+    api_key = get_api_key()
+
+    if not api_key:
+        st.error("❌ GROQ_API_KEY is missing. Please check api.env.")
+        st.stop()
+
+    return ChatGroq(
+        model="openai/gpt-oss-20b",
+        api_key=api_key,
+        temperature=0.3,
+    )
+
+
 defaults = {
     "chat_history": [],
     "vector_store": None,
@@ -44,9 +51,6 @@ for k, v in defaults.items():
         st.session_state[k] = v
 
 
-# ---------------------------
-# PDF PROCESSING
-# ---------------------------
 def get_pdf_text(pdfs):
     text = ""
     total_pages = 0
@@ -56,54 +60,38 @@ def get_pdf_text(pdfs):
         total_pages += len(reader.pages)
 
         for i, page in enumerate(reader.pages):
-            t = page.extract_text()
-            if t:
-                text += f"\n[Page {i+1}]\n{t}"
+            page_text = page.extract_text()
+
+            if page_text:
+                text += f"\n[Page {i + 1}]\n{page_text}"
 
     return text, total_pages
 
 
 def get_chunks(text):
-    return RecursiveCharacterTextSplitter(
+    splitter = RecursiveCharacterTextSplitter(
         chunk_size=800,
         chunk_overlap=100
-    ).split_text(text)
+    )
+
+    return splitter.split_text(text)
 
 
 def build_store(chunks):
-    emb = HuggingFaceEmbeddings(
+    embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
-    return FAISS.from_texts(chunks, embedding=emb)
 
-
-# ---------------------------
-# GROQ LLM (FIXED)
-# ---------------------------
-def get_llm():
-    api_key = get_api_key()
-
-    if not api_key:
-        st.error("❌ GROQ_API_KEY is missing. Add it to Streamlit Secrets or .env")
-        st.stop()
-
-    return ChatGroq(
-        model="llama-3.1-8b-instant",
-        api_key=api_key,
-        temperature=0.3,
+    return FAISS.from_texts(
+        chunks,
+        embedding=embeddings
     )
 
 
-# ---------------------------
-# UTILITIES
-# ---------------------------
 def now_time():
     return datetime.datetime.now().strftime("%I:%M %p")
 
 
-# ---------------------------
-# UI HEADER
-# ---------------------------
 st.markdown(
     "<h1>🧠 DocuMind</h1>"
     "<p>Chat with your PDFs using Groq + LangChain</p>",
@@ -111,10 +99,10 @@ st.markdown(
 )
 
 
-# ---------------------------
-# UPLOAD SECTION (NO API KEY HERE)
-# ---------------------------
-with st.expander("⚙️ Setup — Upload PDFs", expanded=not st.session_state.processed):
+with st.expander(
+    "⚙️ Setup — Upload PDFs",
+    expanded=not st.session_state.processed
+):
 
     pdf_docs = st.file_uploader(
         "Upload PDFs",
@@ -131,8 +119,19 @@ with st.expander("⚙️ Setup — Upload PDFs", expanded=not st.session_state.p
             st.stop()
 
         with st.spinner("Processing PDFs..."):
+
             raw, pages = get_pdf_text(pdf_docs)
+
+            if not raw.strip():
+                st.error("❌ No readable text was found in the uploaded PDF.")
+                st.stop()
+
             chunks = get_chunks(raw)
+
+            if not chunks:
+                st.error("❌ Could not create document chunks.")
+                st.stop()
+
             st.session_state.vector_store = build_store(chunks)
 
             st.session_state.processed = True
@@ -147,10 +146,8 @@ with st.expander("⚙️ Setup — Upload PDFs", expanded=not st.session_state.p
         st.rerun()
 
 
-# ---------------------------
-# DOC STATS
-# ---------------------------
 if st.session_state.processed and st.session_state.doc_stats:
+
     ds = st.session_state.doc_stats
 
     st.info(
@@ -164,19 +161,15 @@ if not st.session_state.processed:
     st.warning("Upload PDFs and process them to start chatting.")
 
 
-# ---------------------------
-# CHAT HISTORY
-# ---------------------------
 for sender, msg in st.session_state.chat_history:
+
     if sender == "user":
         st.markdown(f"**You:** {msg}")
+
     else:
         st.markdown(f"**DocuMind:** {msg}")
 
 
-# ---------------------------
-# SUGGESTIONS
-# ---------------------------
 SUGGESTIONS = [
     "Summarize this document",
     "Key points",
@@ -184,53 +177,85 @@ SUGGESTIONS = [
     "Any data mentioned?"
 ]
 
+
 if st.session_state.processed and len(st.session_state.chat_history) == 0:
+
     st.write("Try asking:")
 
-    for s in SUGGESTIONS:
-        if st.button(s):
-            st.session_state.pending_prompt = s
+    for suggestion in SUGGESTIONS:
+
+        if st.button(suggestion):
+            st.session_state.pending_prompt = suggestion
             st.rerun()
 
 
-# ---------------------------
-# INPUT
-# ---------------------------
 prompt = st.chat_input("Ask DocuMind...")
 
+
 if st.session_state.pending_prompt and not prompt:
+
     prompt = st.session_state.pending_prompt
     st.session_state.pending_prompt = None
 
 
-# ---------------------------
-# CHAT ENGINE
-# ---------------------------
 if prompt:
 
     if not st.session_state.processed:
         st.warning("Process PDFs first")
         st.stop()
 
-    st.session_state.chat_history.append(("user", prompt))
+    st.session_state.chat_history.append(
+        ("user", prompt)
+    )
 
-    docs = st.session_state.vector_store.similarity_search(prompt)
-    context = "\n".join(d.page_content for d in docs)
+    docs = st.session_state.vector_store.similarity_search(
+        prompt,
+        k=4
+    )
+
+    context = "\n\n".join(
+        d.page_content
+        for d in docs
+    )
 
     final_prompt = f"""
-You are DocuMind, an AI that answers only from the PDF context.
+You are DocuMind, an AI assistant that answers questions using only the provided PDF context.
 
-Context:
+Rules:
+- Answer only using information from the PDF context.
+- If the answer is not present in the context, clearly say that the information is not available in the uploaded document.
+- Do not make up information.
+- Keep the answer clear and easy to understand.
+- When possible, mention the relevant page number from the context.
+
+PDF Context:
 {context}
 
-Question:~
+Question:
 {prompt}
+
+Answer:
 """
 
     with st.spinner("Thinking..."):
+
         try:
-            resp = get_llm().invoke(final_prompt)
-            st.session_state.chat_history.append(("assistant", resp.content))
+
+            response = get_llm().invoke(final_prompt)
+
+            answer = response.content
+
+            st.session_state.chat_history.append(
+                ("assistant", answer)
+            )
+
             st.rerun()
+
         except Exception as e:
-            st.error(str(e))
+
+            st.session_state.chat_history.pop()
+
+            st.error(
+                f"❌ Unable to generate a response: {str(e)}"
+            )
+
